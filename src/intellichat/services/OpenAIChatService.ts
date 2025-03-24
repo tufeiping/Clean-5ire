@@ -133,7 +133,7 @@ export default class OpenAIChatService
       type: 'function',
       function: {
         name: tool.name,
-        description: tool.description.substring(0, 1000), // some models have a limit on the description length, like gpt series, so we truncate it
+        description: tool.description?.substring(0, 1000), // some models have a limit on the description length, like gpt series, so we truncate it
         parameters: {
           type: tool.inputSchema.type,
           properties: tool.inputSchema.properties || {},
