@@ -12,13 +12,11 @@ import {
   shell,
   ipcMain,
   nativeTheme,
-  MessageBoxOptions,
 } from 'electron';
 import crypto from 'crypto';
 import { autoUpdater } from 'electron-updater';
 import { Deeplink } from 'electron-deeplink';
 import Store from 'electron-store';
-import { update } from 'lodash';
 import * as logging from './logging';
 import axiom from '../vendors/axiom';
 import MenuBuilder from './menu';
