@@ -80,7 +80,7 @@ export default class ModuleContext {
     mcpSvr = {
       ...mcpSvr,
       ...omitBy({ ...server, isActive: true }, isUndefined),
-    };
+    } as IMCPServer;
     logging.debug('MCP Server:', mcpSvr);
     return mcpSvr;
   }
@@ -139,7 +139,7 @@ export default class ModuleContext {
 
   public async load() {
     const { servers } = await this.getConfig();
-    for (const server of servers) {
+    await Promise.all(servers.map(async (server: IMCPServer) => {
       if (server.isActive) {
         logging.debug('Activating server:', server.key);
         const { error } = await this.activate(server);
@@ -147,7 +147,7 @@ export default class ModuleContext {
           logging.error('Failed to activate server:', server.key, error);
         }
       }
-    }
+    }));
   }
 
   public async addServer(server: IMCPServer) {
@@ -202,6 +202,7 @@ export default class ModuleContext {
         stderr: process.platform === 'win32' ? 'pipe' : 'inherit',
         env: mergedEnv,
       });
+      // await client.connect(transport, { timeout: 60 * 1000 * 5 }); not yet
       await client.connect(transport);
       this.clients[key] = client;
       await this.updateConfigAfterActivation(mcpSvr, config);
@@ -228,11 +229,13 @@ export default class ModuleContext {
   }
 
   public async close() {
-    for (const key in this.clients) {
-      logging.info(`Closing MCP Client ${key}`);
-      await this.clients[key].close();
-      delete this.clients[key];
-    }
+    await Promise.all(
+      Object.keys(this.clients).map(async (key) => {
+        logging.info(`Closing MCP Client ${key}`);
+        await this.clients[key].close();
+        delete this.clients[key];
+      }),
+    );
   }
 
   public async listTools(key?: string) {
@@ -247,7 +250,7 @@ export default class ModuleContext {
         return tool;
       });
     } else {
-      for (const clientName in this.clients) {
+      await Promise.all(Object.keys(this.clients).map(async (clientName:string) => {
         const { tools } = await this.clients[clientName].listTools();
         allTools = allTools.concat(
           tools.map((tool: any) => {
@@ -255,7 +258,7 @@ export default class ModuleContext {
             return tool;
           }),
         );
-      }
+      }));
     }
     // logging.debug('All Tools:', JSON.stringify(allTools, null, 2));
     return allTools;
@@ -274,10 +277,14 @@ export default class ModuleContext {
       throw new Error(`MCP Client ${client} not found`);
     }
     logging.debug('Calling:', client, name, args);
-    const result = await this.clients[client].callTool({
-      name,
-      arguments: args,
-    });
+    const result = await this.clients[client].callTool(
+      {
+        name,
+        arguments: args,
+      },
+      undefined,
+      { timeout: 60 * 1000 * 5 },
+    );
     return result;
   }
 
