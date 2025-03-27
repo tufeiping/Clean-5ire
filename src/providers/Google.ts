@@ -18,6 +18,21 @@ export default {
       streamCustomizable: false,
     },
     models: {
+      'gemini-2.5-pro-exp-03-25': {
+        label: 'gemini-2.5-pro-exp',
+        contextWindow: 1000000,
+        maxTokens: 64000,
+        defaultMaxTokens: 32000,
+        inputPrice: 0.0001,
+        outputPrice: 0.0004,
+        jsonModelEnabled: true,
+        toolEnabled: true,
+        vision: {
+          enabled: true,
+        },
+        description: `Google's our most advanced coding model yet and is state-of-the-art across a range of benchmarks requiring enhanced reasoning.`,
+        group: 'Gemini',
+      },
       'gemini-2.0-flash-001': {
         label: 'gemini-2.0-flash',
         contextWindow: 1048576,
