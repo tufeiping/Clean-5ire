@@ -39,7 +39,7 @@
 </div>
 <br />
 
-# Prerequisites
+# 🛠️ Prerequisites
 
 Before getting started, please ensure you have the following components installed:
 
