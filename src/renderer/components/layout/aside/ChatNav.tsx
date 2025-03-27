@@ -3,13 +3,12 @@ import useNav from 'hooks/useNav';
 import useChatStore from 'stores/useChatStore';
 import { IChat } from 'intellichat/types';
 import Mousetrap from 'mousetrap';
-import { findIndex, set, uniq } from 'lodash';
+import { findIndex } from 'lodash';
 import { DndContext } from '@dnd-kit/core';
 import ChatFolders from 'renderer/components/ChatFolders';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import ChatItem from 'renderer/components/ChatItem';
 import { Skeleton, SkeletonItem } from '@fluentui/react-components';
-import { tempChatId } from 'consts';
 
 export default function ChatNav({ collapsed }: { collapsed: boolean }) {
   const [loading, setLoading] = useState(true);
@@ -91,14 +90,32 @@ export default function ChatNav({ collapsed }: { collapsed: boolean }) {
         <Skeleton
           aria-label="Loading chats"
           appearance="translucent"
-          className="flex flex-col gap-2 pt-3 mx-2"
+          className="flex flex-col pt-3 gap-2 mx-3"
         >
-          <SkeletonItem size={20} />
-          <SkeletonItem size={20} style={{ width: 200 }} />
-          <SkeletonItem size={20} style={{ width: 120 }} />
-          <SkeletonItem size={20} style={{ width: 220 }} />
-          <SkeletonItem size={20} style={{ width: 200 }} />
-          <SkeletonItem size={20} style={{ width: 200 }} />
+          <SkeletonItem
+            size={20}
+            style={{ width: `${collapsed ? '60px' : '100%'}` }}
+          />
+          <SkeletonItem
+            size={20}
+            style={{ width: `${collapsed ? '60px' : '200px'}` }}
+          />
+          <SkeletonItem
+            size={20}
+            style={{ width: `${collapsed ? '60px' : '120px'}` }}
+          />
+          <SkeletonItem
+            size={20}
+            style={{ width: `${collapsed ? '60px' : '220px'}` }}
+          />
+          <SkeletonItem
+            size={20}
+            style={{ width: `${collapsed ? '60px' : '200px'}` }}
+          />
+          <SkeletonItem
+            size={20}
+            style={{ width: `${collapsed ? '60px' : '200px'}` }}
+          />
         </Skeleton>
       ) : (
         <DndContext
