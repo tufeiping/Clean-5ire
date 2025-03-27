@@ -39,6 +39,15 @@
 </div>
 <br />
 
+# 🛠️ Prerequisites
+
+Before getting started, please ensure you have the following components installed:
+- Python
+- Node.js
+- uv (Python package manager)
+
+For detailed installation instructions, please see our [Installation Guide](INSTALLATION.md).
+
 # Features
 
 ## ⚒️ Support Tools via MCP Servers
