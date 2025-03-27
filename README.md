@@ -39,14 +39,19 @@
 </div>
 <br />
 
-# 🛠️ Prerequisites
 
-Before getting started, please ensure you have the following components installed:
+ ### Before to activating tools feature, ensure the following components are installed:
+
 - Python
 - Node.js
 - uv (Python package manager)
 
+
+These components are required as they constitute the runtime environment for the MCP Server. If you don't anticipate using the tools feature immediately, you may choose to skip this installation step and complete it later when the need arises.
+
 For detailed installation instructions, please see our [Installation Guide](INSTALLATION.md).
+
+<br />
 
 # Features
 
