@@ -51,14 +51,14 @@ export default function ModelCtrl({
 
   const activeModel = useMemo(() => ctx.getModel(), [chat.model]);
 
-  const onModelChange = (
-    _: MenuCheckedValueChangeEvent,
-    data: MenuCheckedValueChangeData,
-  ) => {
-    const $model = data.checkedItems[0];
-    editStage(chat.id, { model: $model });
-    window.electron.ingestEvent([{ app: 'switch-model' }, { model: $model }]);
-    closeDialog();
+  const closeDialog = () => {
+    setOpen(false);
+    Mousetrap.unbind('esc');
+  };
+
+  const openDialog = () => {
+    setOpen(true);
+    Mousetrap.bind('esc', closeDialog);
   };
 
   const toggleDialog = () => {
@@ -69,14 +69,14 @@ export default function ModelCtrl({
     }
   };
 
-  const openDialog = () => {
-    setOpen(true);
-    Mousetrap.bind('esc', closeDialog);
-  };
-
-  const closeDialog = () => {
-    setOpen(false);
-    Mousetrap.unbind('esc');
+  const onModelChange = (
+    _: MenuCheckedValueChangeEvent,
+    data: MenuCheckedValueChangeData,
+  ) => {
+    const $model = data.checkedItems[0];
+    editStage(chat.id, { model: $model });
+    window.electron.ingestEvent([{ app: 'switch-model' }, { model: $model }]);
+    closeDialog();
   };
 
   useEffect(() => {
@@ -92,6 +92,9 @@ export default function ModelCtrl({
     <Menu
       hasCheckmarks
       open={open}
+      onOpenChange={(_, data) => {
+        setOpen(data.open);
+      }}
       onCheckedValueChange={onModelChange}
       checkedValues={{ model: [activeModel.label as string] }}
     >
@@ -103,7 +106,6 @@ export default function ModelCtrl({
           iconPosition="after"
           icon={<ChevronDown16Regular />}
           title="Mod+Shift+1"
-          onClick={toggleDialog}
           style={{ borderColor: 'transparent', boxShadow: 'none', padding: 1 }}
           className="text-color-secondary flex justify-start items-center"
         >
