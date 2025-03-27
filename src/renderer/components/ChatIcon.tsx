@@ -1,6 +1,8 @@
 import { Tooltip } from '@fluentui/react-components';
 import { Chat20Filled, Chat20Regular } from '@fluentui/react-icons';
 import { IChat } from 'intellichat/types';
+import useChatStore from 'stores/useChatStore';
+import Spinner from './Spinner';
 
 export default function ChatIcon({
   chat,
@@ -9,6 +11,18 @@ export default function ChatIcon({
   chat: IChat;
   isActive: boolean;
 }) {
+  const chatStates = useChatStore((state) => state.states);
+
+  const renderChatIcon = () => {
+    if (chatStates[chat.id]?.loading) {
+      return <Spinner size={18} />;
+    }
+    if (isActive) {
+      return <Chat20Filled />;
+    }
+    return <Chat20Regular />;
+  };
+
   return (
     <Tooltip
       withArrow
@@ -16,7 +30,7 @@ export default function ChatIcon({
       relationship="label"
       positioning="above-start"
     >
-      {isActive ? <Chat20Filled /> : <Chat20Regular />}
+      {renderChatIcon()}
     </Tooltip>
   );
 }
