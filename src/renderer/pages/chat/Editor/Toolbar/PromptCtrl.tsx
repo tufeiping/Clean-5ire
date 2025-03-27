@@ -49,6 +49,11 @@ export default function PromptCtrl({
   const getPrompt = usePromptStore((state) => state.getPrompt);
   const editStage = useChatStore((state) => state.editStage);
 
+  const closeDialog = () => {
+    setOpen(false);
+    Mousetrap.unbind('esc');
+  };
+
   const openDialog = () => {
     fetchPrompts({});
     setOpen(true);
@@ -59,10 +64,6 @@ export default function PromptCtrl({
     Mousetrap.bind('esc', closeDialog);
   };
 
-  const closeDialog = () => {
-    setOpen(false);
-    Mousetrap.unbind('esc');
-  };
 
   const prompts = useMemo(() => {
     return allPrompts.filter((prompt) => {
@@ -160,7 +161,7 @@ export default function PromptCtrl({
         <DialogTrigger disableButtonEnhancement>
           <Button
             size="small"
-            title="Mod+Shift+2"
+            title={t('Common.Prompts')+'(Mod+Shift+2)'}
             aria-label={t('Common.Prompts')}
             appearance="subtle"
             style={{ borderColor: 'transparent', boxShadow: 'none' }}

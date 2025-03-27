@@ -52,6 +52,11 @@ export default function KnowledgeCtrl({
     [],
   );
 
+  const closeDialog = () => {
+    setOpen(false);
+    Mousetrap.unbind('esc');
+  };
+
   const openDialog = () => {
     listCollections().then(async (collections) => {
       setCollections(collections);
@@ -65,11 +70,6 @@ export default function KnowledgeCtrl({
     });
     setOpen(true);
     Mousetrap.bind('esc', closeDialog);
-  };
-
-  const closeDialog = () => {
-    setOpen(false);
-    Mousetrap.unbind('esc');
   };
 
   useEffect(() => {
@@ -98,7 +98,9 @@ export default function KnowledgeCtrl({
       data.selectedOptions.includes(collection.id),
     );
     const ok = await setChatCollections(chat.id, selectedCollections);
-    ok && setSelectedCollections(selectedCollections);
+    if(ok) {
+      setSelectedCollections(selectedCollections);
+    }
   };
 
   const onCollectionRemove = async (collection: ICollection) => {
@@ -108,10 +110,11 @@ export default function KnowledgeCtrl({
       ),
     );
     const ok = await removeChatCollection(chat.id, collection.id);
-    ok &&
+    if(ok){
       setSelectedCollections(
         selectedCollections.filter((c: ICollection) => c.id !== collection.id),
       );
+    }
   };
 
   return (
@@ -120,7 +123,7 @@ export default function KnowledgeCtrl({
         <DialogTrigger disableButtonEnhancement>
           <Button
             size="small"
-            title="Mod+Shift+3"
+            title={t('Common.Knowledge')+'(Mod+Shift+3)'}
             aria-label={t('Common.Knowledge')}
             className="justify-start text-color-secondary"
             style={{

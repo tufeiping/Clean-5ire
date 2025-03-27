@@ -22,7 +22,7 @@ import { IChat, IChatContext } from 'intellichat/types';
 import useSettingsStore from 'stores/useSettingsStore';
 import Mousetrap from 'mousetrap';
 
-const debug = Debug('5ire:pages:chat:Editor:Toolbar:TemperatureCtrl');
+// const debug = Debug('5ire:pages:chat:Editor:Toolbar:TemperatureCtrl');
 
 const TemperatureIcon = bundleIcon(Temperature20Filled, Temperature20Regular);
 
@@ -74,7 +74,7 @@ export default function TemperatureCtrl({
       <PopoverTrigger disableButtonEnhancement>
         <Button
           size="small"
-          title="Mod+Shift+5"
+          title={t('Common.Temperature')+"(Mod+Shift+5)"}
           aria-label={t('Common.Temperature')}
           appearance="subtle"
           icon={<TemperatureIcon className="mr-0" />}

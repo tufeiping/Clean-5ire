@@ -14,7 +14,6 @@ import {
 import useAppearanceStore from 'stores/useAppearanceStore';
 import useChatStore from 'stores/useChatStore';
 import { useTranslation } from 'react-i18next';
-import useChatContext from 'hooks/useChatContext';
 import ConfirmDialog from 'renderer/components/ConfirmDialog';
 
 import { tempChatId } from 'consts';
@@ -128,7 +127,7 @@ export default function Header() {
               )
             }
             appearance="transparent"
-            title="Mod+shift+r"
+            title={'Inspector(Mod+shift+r)'}
             onClick={toggleChatSidebarVisibility}
           />
         </div>

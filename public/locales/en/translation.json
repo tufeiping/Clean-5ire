@@ -270,5 +270,6 @@
   "Upgrade.Ready": "Ready",
   "Upgrade.Install": "Install",
   "Upgrade.QuitAndInstall": "Quit and install new version.",
-  "Folder.Settings.Description": "Folder settings are automatically applied to all conversations inside. Changes to folder settings will overwrite individual conversation settings."
+  "Folder.Settings.Description": "Folder settings are automatically applied to all conversations inside. Changes to folder settings will overwrite individual conversation settings.",
+  "Common.NumberOfContextMessages": "Number of Context Messages"
 }

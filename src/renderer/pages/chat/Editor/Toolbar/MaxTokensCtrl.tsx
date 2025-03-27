@@ -83,7 +83,7 @@ export default function MaxTokens({
       <PopoverTrigger>
         <Button
           size="small"
-          title="Mod+Shift+4"
+          title={t('Common.MaxTokens') + '(Mod+Shift+4)'}
           aria-label={t('Common.MaxTokens')}
           appearance="subtle"
           onClick={(e) => setOpen((prevOpen) => !prevOpen)}

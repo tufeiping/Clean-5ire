@@ -76,8 +76,8 @@ export default function CtxNumCtrl({
       <PopoverTrigger disableButtonEnhancement>
         <Button
           size="small"
-          title="Mod+Shift+6"
-          aria-label={t('Common.Temperature')}
+          title={t('Common.NumberOfContextMessages') + '(Mod+Shift+6)'}
+          aria-label={t('Common.NumberOfContextMessages')}
           appearance="subtle"
           icon={<AttacheTextIcon className="mr-0" />}
           className="justify-start text-color-secondary flex-shrink-0"
