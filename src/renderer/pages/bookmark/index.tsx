@@ -57,7 +57,7 @@ export default function Bookmarks() {
         className="bookmark-item flex-grow pb-12 bg-brand-surface-2 w-full rounded relative"
         onClick={() => navToDetail(bookmark.id)}
       >
-        <div className="px-2.5 pt-2.5 text-ellipsis text-wrap break-all">
+        <div className="px-2.5 pt-2.5 text-ellipsis text-wrap break-word">
           <strong
             dangerouslySetInnerHTML={{
               __html: highlight(bookmark.prompt?.substring(0, 70), keyword),

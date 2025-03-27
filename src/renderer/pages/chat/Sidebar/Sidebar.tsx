@@ -45,7 +45,7 @@ export default function Sidebar({ chatId }: { chatId: string }) {
       <div className="text-gray-300 dark:text-gray-600 font-bold text-lg mb-2">
         {t('Common.Inspector')}
       </div>
-      <div className="h-full overflow-x-hidden overflow-y-auto break-all -ml-2.5">
+      <div className="h-full overflow-x-hidden overflow-y-auto break-word -ml-2.5">
         <Accordion multiple collapsible>
           {trace?.map((item: ITraceMessage, idx: number) => {
             return item.message === '' ? (

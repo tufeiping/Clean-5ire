@@ -216,7 +216,7 @@ export default function Message({ message }: { message: IChatMessage }) {
               </div>
             ) : null}
             <div
-              className={`mt-1 break-all ${
+              className={`mt-1 break-word ${
                 fontSize === 'large' ? 'font-lg' : ''
               }`}
               dangerouslySetInnerHTML={{
@@ -247,7 +247,7 @@ export default function Message({ message }: { message: IChatMessage }) {
         >
           <div className="avatar flex-shrink-0 mr-2" />
           <div
-            className={`mt-1 break-all ${
+            className={`mt-1 break-word ${
               fontSize === 'large' ? 'font-lg' : ''
             }`}
             dangerouslySetInnerHTML={{
