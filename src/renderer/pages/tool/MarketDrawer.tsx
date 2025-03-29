@@ -28,28 +28,32 @@ export default function ToolMarketDrawer({
   onInstall,
 }: {
   open: boolean;
-  setOpen: (open: boolean) => void;
-  onInstall: (server: IMCPServer) => void;
+  setOpen: (openState: boolean) => void;
+  onInstall: (mcpServer: IMCPServer) => void;
 }) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const { fetchServers, servers: allServers } = useMCPServerMarketStore();
+  const filters = useMCPServerMarketStore((state) => state.filters);
+  const {
+    fetchServers,
+    servers: allServers,
+    setFilters,
+  } = useMCPServerMarketStore();
   const { config } = useMCPStore();
-  const [filter, setFilter] = useState<string[]>([]);
 
   const debouncedSearch = useRef(
     debounce((_: SearchBoxChangeEvent, data: InputOnChangeData) => {
       const value = data.value || '';
       const terms = value.split(/\s+/g).filter(Boolean);
-      setFilter(terms);
+      setFilters(terms);
     }, 500),
   ).current;
 
   const servers = useMemo(() => {
     let filteredServers = allServers;
-    if (filter.length > 0) {
+    if (filters.length > 0) {
       filteredServers = allServers.filter((s: any) => {
-        return filter.every((f) => {
+        return filters.every((f) => {
           return (
             (s.name || s.key).toLowerCase().includes(f.toLowerCase()) ||
             (s.description || '').toLowerCase().includes(f.toLowerCase())
@@ -62,7 +66,7 @@ export default function ToolMarketDrawer({
       const nameB = b.name || b.key;
       return nameA.localeCompare(nameB);
     });
-  }, [filter, allServers]);
+  }, [filters, allServers]);
 
   const installedServer = useMemo(
     () => new Set(config.servers.map((svr: IMCPServer) => svr.key)),
@@ -89,7 +93,13 @@ export default function ToolMarketDrawer({
   }, [open, loadServers]);
 
   return (
-    <Drawer open={open} position="end" separator size="medium">
+    <Drawer
+      open={open}
+      position="end"
+      separator
+      size="medium"
+      onOpenChange={(_, data) => setOpen(data.open)}
+    >
       <DrawerHeader className="border-none">
         <DrawerHeaderTitle
           action={
@@ -113,7 +123,10 @@ export default function ToolMarketDrawer({
             >
               {t('Common.Submit')}
             </Button>
-            <SearchBox onChange={debouncedSearch} />
+            <SearchBox
+              onChange={debouncedSearch}
+              defaultValue={filters.join(' ')}
+            />
           </div>
         </DrawerHeaderTitle>
       </DrawerHeader>
@@ -142,12 +155,13 @@ export default function ToolMarketDrawer({
                           dangerouslySetInnerHTML={{
                             __html: highlight(
                               server.name || server.key,
-                              filter,
+                              filters,
                             ),
                           }}
                         />
                         {server.homepage && (
                           <button
+                            type="button"
                             title="homepage"
                             className="text-gray-400 hover:text-gray-800 dark:text-gray-500 dark:hover:text-gray-300 ml-2"
                             onClick={() =>
@@ -177,7 +191,7 @@ export default function ToolMarketDrawer({
                     <p
                       className="text-gray-700 dark:text-gray-400 text-xs"
                       dangerouslySetInnerHTML={{
-                        __html: highlight(server.description || '', filter),
+                        __html: highlight(server.description || '', filters),
                       }}
                     />
                   </div>
