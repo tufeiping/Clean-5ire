@@ -7,38 +7,44 @@ import React, {
   useMemo,
 } from 'react';
 import { useParams } from 'react-router-dom';
-import { debounce, isNumber } from 'lodash';
+
 import { useTranslation } from 'react-i18next';
-import SplitPane, { Pane } from 'split-pane-react';
-import useChatStore from 'stores/useChatStore';
+import { tempChatId } from 'consts';
+
 import useToast from 'hooks/useToast';
 import useChatService from 'hooks/useChatService';
 import useToken from 'hooks/useToken';
-import Empty from 'renderer/components/Empty';
-import { tempChatId } from 'consts';
-import useUsageStore from 'stores/useUsageStore';
-import useNav from 'hooks/useNav';
-import Header from './Header';
-import Messages from './Messages';
-import Editor from './Editor';
 
-import './Chat.scss';
-import 'split-pane-react/esm/themes/default.css';
 import { IChat, IChatResponseMessage } from 'intellichat/types';
-import { isBlank } from 'utils/validators';
+import INextChatService from 'intellichat/services/INextCharService';
+import { ICollectionFile } from 'types/knowledge';
+
+import useChatStore from 'stores/useChatStore';
 import useChatKnowledgeStore from 'stores/useChatKnowledgeStore';
 import useKnowledgeStore from 'stores/useKnowledgeStore';
-import { ICollectionFile } from 'types/knowledge';
+import useSettingsStore from 'stores/useSettingsStore';
+import useInspectorStore from 'stores/useInspectorStore';
+
+import SplitPane, { Pane } from 'split-pane-react';
+import Empty from 'renderer/components/Empty';
+
+import useUsageStore from 'stores/useUsageStore';
+import useNav from 'hooks/useNav';
+import { debounce } from 'lodash';
+import { isBlank } from 'utils/validators';
 import {
   extractCitationIds,
   getNormalContent,
   getReasoningContent,
 } from 'utils/util';
-import INextChatService from 'intellichat/services/INextCharService';
-import useSettingsStore from 'stores/useSettingsStore';
-import useInspectorStore from 'stores/useInspectorStore';
+import Header from './Header';
+import Messages from './Messages';
+import Editor from './Editor';
 import Sidebar from './Sidebar/Sidebar';
 import CitationDialog from './CitationDialog';
+
+import './Chat.scss';
+import 'split-pane-react/esm/themes/default.css';
 
 const debug = Debug('5ire:pages:chat');
 
@@ -73,7 +79,7 @@ export default function Chat() {
   } = useChatStore();
   const clearTrace = useInspectorStore((state) => state.clearTrace);
   const modelMapping = useSettingsStore((state) => state.modelMapping);
-  const [chatService] = useState<INextChatService>(useChatService());
+  const chatService = useRef<INextChatService>(useChatService());
 
   const { notifyError } = useToast();
 
@@ -127,7 +133,7 @@ export default function Chat() {
   useEffect(() => {
     if (activeChatId !== tempChatId) {
       getChat(activeChatId);
-    } else if (chatService?.isReady()) {
+    } else if (chatService.current?.isReady()) {
       if (folder) {
         initChat(getCurFolderSettings());
       } else {
@@ -188,7 +194,7 @@ export default function Chat() {
       if (prompt.trim() === '') {
         return;
       }
-      const model = chatService.context.getModel();
+      const model = chatService.current.context.getModel();
       let $chatId = activeChatId;
       if (activeChatId === tempChatId) {
         const $chat = await createChat(
@@ -226,8 +232,8 @@ export default function Chat() {
         reply: '',
         chatId: $chatId,
         model: modelMapping[model.label || ''] || model.label,
-        temperature: chatService.context.getTemperature(),
-        maxTokens: chatService.context.getMaxTokens(),
+        temperature: chatService.current.context.getTemperature(),
+        maxTokens: chatService.current.context.getMaxTokens(),
         isActive: 1,
       });
 
@@ -322,7 +328,7 @@ ${prompt}
             ),
           });
           useUsageStore.getState().create({
-            provider: chatService.provider.name,
+            provider: chatService.current.provider.name,
             model: modelMapping[model.label || ''] || model.label,
             inputTokens,
             outputTokens,
@@ -330,17 +336,17 @@ ${prompt}
         }
         updateStates($chatId, { loading: false, runningTool: null });
       };
-      chatService.onComplete(onChatComplete);
-      chatService.onReading((content: string, reasoning?: string) => {
+      chatService.current.onComplete(onChatComplete);
+      chatService.current.onReading((content: string, reasoning?: string) => {
         appendReply(msg.id, content || '', reasoning || '');
         if (!isUserScrollingRef.current) {
           scrollToBottom();
         }
       });
-      chatService.onToolCalls((toolName: string) => {
+      chatService.current.onToolCalls((toolName: string) => {
         updateStates($chatId, { runningTool: toolName });
       });
-      chatService.onError((err: any, aborted: boolean) => {
+      chatService.current.onError((err: any, aborted: boolean) => {
         console.error(err);
         if (!aborted) {
           notifyError(err.message || err);
@@ -348,7 +354,7 @@ ${prompt}
         updateStates($chatId, { loading: false });
       });
 
-      await chatService.chat([
+      await chatService.current.chat([
         {
           role: 'user',
           content: actualPrompt,
@@ -390,17 +396,19 @@ ${prompt}
                   <div className="mx-auto max-w-screen-md px-5">
                     <MemoizedMessages messages={messages} />
                   </div>
-                ) : chatService.isReady() ? null : (
-                  <Empty image="hint" text={t('Notification.APINotReady')} />
+                ) : (
+                  chatService.current.isReady() || (
+                    <Empty image="hint" text={t('Notification.APINotReady')} />
+                  )
                 )}
               </div>
             </Pane>
             <Pane minSize={180} maxSize="60%">
-              {chatService.isReady() ? (
+              {chatService.current.isReady() ? (
                 <Editor
                   onSubmit={onSubmit}
                   onAbort={() => {
-                    chatService.abort();
+                    chatService.current.abort();
                   }}
                 />
               ) : (
