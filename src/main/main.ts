@@ -598,9 +598,9 @@ app
       axiom.flush();
     });
 
-    app.on('before-quit', () => {
+    app.on('before-quit', async () => {
       ipcMain.removeAllListeners();
-      mcp.close();
+      await mcp.close();
     });
 
     app.on(
