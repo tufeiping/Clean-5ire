@@ -7,15 +7,13 @@ import React, {
   useMemo,
 } from 'react';
 import { useParams } from 'react-router-dom';
-
 import { useTranslation } from 'react-i18next';
 import { tempChatId } from 'consts';
-
 import useToast from 'hooks/useToast';
 import useChatService from 'hooks/useChatService';
 import useToken from 'hooks/useToken';
 
-import { IChat, IChatResponseMessage } from 'intellichat/types';
+import { IChat, IChatMessage, IChatResponseMessage } from 'intellichat/types';
 import INextChatService from 'intellichat/services/INextCharService';
 import { ICollectionFile } from 'types/knowledge';
 
@@ -45,6 +43,7 @@ import CitationDialog from './CitationDialog';
 
 import './Chat.scss';
 import 'split-pane-react/esm/themes/default.css';
+import eventBus, { RetryEvent } from 'utils/bus';
 
 const debug = Debug('5ire:pages:chat');
 
@@ -54,7 +53,7 @@ export default function Chat() {
   const { t } = useTranslation();
   const id = useParams().id || tempChatId;
   const anchor = useParams().anchor || null;
-
+  const bus = useRef(eventBus);
   const [activeChatId, setActiveChatId] = useState(id);
   if (activeChatId !== id) {
     setActiveChatId(id);
@@ -177,20 +176,27 @@ export default function Chat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeChatId, debouncedFetchMessages, keywords]);
 
+  useEffect(() => {
+    bus.current.on('retry', async (event: any) => {
+      await onSubmit(event.prompt, event.msgId);
+    });
+    return () => {
+      bus.current.off('retry');
+    };
+  }, [messages]);
+
   const sashRender = () => <div className="border-t border-base" />;
 
-  const createMessage = useChatStore((state) => state.createMessage);
-  const createChat = useChatStore((state) => state.createChat);
-  const deleteStage = useChatStore((state) => state.deleteStage);
+  const { createMessage, createChat, deleteStage, updateMessage, appendReply } =
+    useChatStore();
+
   const { countInput, countOutput } = useToken();
-  const updateMessage = useChatStore((state) => state.updateMessage);
-  const appendReply = useChatStore((state) => state.appendReply);
 
   const { moveChatCollections, listChatCollections, setChatCollections } =
     useChatKnowledgeStore.getState();
 
   const onSubmit = useCallback(
-    async (prompt: string) => {
+    async (prompt: string, msgId?: string) => {
       if (prompt.trim() === '') {
         return;
       }
@@ -218,26 +224,43 @@ export default function Chat() {
         }
         deleteStage(tempChatId);
       } else {
-        await updateChat({
-          id: activeChatId,
-          summary: prompt.substring(0, 50),
-        });
+        if (!msgId) {
+          await updateChat({
+            id: activeChatId,
+            summary: prompt.substring(0, 50),
+          });
+        }
         setKeyword(activeChatId, ''); // clear filter keyword
       }
       clearTrace($chatId);
       updateStates($chatId, { loading: true });
+      const msg = msgId
+        ? (messages.find((message) => msgId === message.id) as IChatMessage)
+        : await useChatStore.getState().createMessage({
+            prompt,
+            reply: '',
+            chatId: $chatId,
+            model: modelMapping[model.label || ''] || model.label,
+            temperature: chatService.current.context.getTemperature(),
+            maxTokens: chatService.current.context.getMaxTokens(),
+            isActive: 1,
+          });
 
-      const msg = await useChatStore.getState().createMessage({
-        prompt,
-        reply: '',
-        chatId: $chatId,
-        model: modelMapping[model.label || ''] || model.label,
-        temperature: chatService.current.context.getTemperature(),
-        maxTokens: chatService.current.context.getMaxTokens(),
-        isActive: 1,
-      });
-
-      scrollToBottom();
+      if (msgId) {
+        await updateMessage({
+          id: msgId,
+          reply: '',
+          reasoning: '',
+          model: modelMapping[model.label || ''] || model.label,
+          temperature: chatService.current.context.getTemperature(),
+          maxTokens: chatService.current.context.getMaxTokens(),
+          isActive: 1,
+          citedFiles: '[]',
+          citedChunks: '[]',
+        });
+      } else {
+        scrollToBottom();
+      }
 
       // Knowledge Collections
       let knowledgeChunks = [];
@@ -354,16 +377,20 @@ ${prompt}
         updateStates($chatId, { loading: false });
       });
 
-      await chatService.current.chat([
-        {
-          role: 'user',
-          content: actualPrompt,
-        },
-      ]);
+      await chatService.current.chat(
+        [
+          {
+            role: 'user',
+            content: actualPrompt,
+          },
+        ],
+        msgId,
+      );
       window.electron.ingestEvent([{ app: 'chat' }, { model: model.label }]);
     },
     [
       activeChatId,
+      messages,
       createMessage,
       scrollToBottom,
       createChat,

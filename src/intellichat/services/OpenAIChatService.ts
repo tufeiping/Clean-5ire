@@ -67,6 +67,7 @@ export default class OpenAIChatService
   // eslint-disable-next-line class-methods-use-this
   protected async makeMessages(
     messages: IChatRequestMessage[],
+    msgId?: string,
   ): Promise<IChatRequestMessage[]> {
     const result = [];
     const systemMessage = this.context.getSystemMessage();
@@ -84,7 +85,7 @@ export default class OpenAIChatService
         content: systemMessage,
       });
     }
-    this.context.getCtxMessages().forEach((msg: IChatMessage) => {
+    this.context.getCtxMessages(msgId).forEach((msg: IChatMessage) => {
       result.push({
         role: 'user',
         content: msg.prompt,
@@ -175,11 +176,12 @@ export default class OpenAIChatService
 
   protected async makePayload(
     message: IChatRequestMessage[],
+    msgId?: string,
   ): Promise<IChatRequestPayload> {
     const modelName = this.getModelName() as string;
     const payload: IChatRequestPayload = {
       model: modelName,
-      messages: await this.makeMessages(message),
+      messages: await this.makeMessages(message, msgId),
       temperature: this.context.getTemperature(),
       stream: true,
     };
@@ -213,8 +215,9 @@ export default class OpenAIChatService
 
   protected async makeRequest(
     messages: IChatRequestMessage[],
+    msgId?: string,
   ): Promise<Response> {
-    const payload = await this.makePayload(messages);
+    const payload = await this.makePayload(messages, msgId);
     debug('About to make a request, payload:\r\n', payload);
     const { base, key } = this.apiSettings;
     const url = urlJoin('/chat/completions', base);

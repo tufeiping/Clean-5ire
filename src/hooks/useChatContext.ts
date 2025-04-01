@@ -141,6 +141,7 @@ export default function useChatContext(): IChatContext {
             messages = messages.slice(0, index + 1);
           }
         }
+
         if (messages.length <= maxCtxMessages) {
           ctxMessages = messages.slice(0, -1);
         } else {
