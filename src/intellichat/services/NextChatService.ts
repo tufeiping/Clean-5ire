@@ -181,8 +181,11 @@ export default abstract class NextCharService {
       signal = this.abortController.signal;
       const response = await this.makeRequest(messages, msgId);
       debug('Start Reading:', response.status, response.statusText);
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('text/event-stream')) {
+        raiseError(500, null, `Invalid content:${await response.text()}`);
+      }
       if (response.status !== 200) {
-        const contentType = response.headers.get('content-type');
         let msg;
         let json;
         if (response.status === 404) {
@@ -201,7 +204,9 @@ export default abstract class NextCharService {
       }
       const chatReader = this.createReader(reader);
       const readResult = await chatReader.read({
-        onError: (err: any) => this.onErrorCallback(err, !!signal?.aborted),
+        onError: (err: any) => {
+          this.onErrorCallback(err, !!signal?.aborted);
+        },
         onProgress: (replyChunk: string, reasoningChunk?: string) => {
           reply += replyChunk;
           reasoning += reasoningChunk || '';
