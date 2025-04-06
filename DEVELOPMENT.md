@@ -161,3 +161,8 @@ This will create a distributable package in the `release/build` directory.
 - [Supabase Documentation](https://supabase.com/docs)
 - [Axiom Documentation](https://axiom.co/docs/reference/settings#token)
 - [Model Context Protocol](https://modelcontextprotocol.io/)
+
+
+## Acknowledgements
+
+A big thanks to [@cs3b](https://github.com/cs3b) for helping with this document.
