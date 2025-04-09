@@ -32,7 +32,6 @@ export default {
         },
         description: `specialized model for advanced image generation and understanding`,
         toolEnabled: true,
-        group: 'Grok',
       },
       'grok-2': {
         label: 'grok-2',
@@ -44,7 +43,6 @@ export default {
         isDefault: true,
         description: `Comparable performance to Grok 2 but with improved efficiency, speed and capabilities.`,
         toolEnabled: true,
-        group: 'Grok',
       },
     },
   },
