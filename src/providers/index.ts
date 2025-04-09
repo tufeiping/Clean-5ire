@@ -49,17 +49,22 @@ export function getChatModel(
 }
 
 export function getGroupedChatModelNames(): { [key: string]: string[] } {
-  const group = (models: IChatModel[]) =>
-    models.reduce((acc: { [key: string]: string[] }, cur: IChatModel) => {
-      if (acc[cur.group]) {
-        acc[cur.group].push(cur.name);
-      } else {
-        acc[cur.group] = [cur.name];
+  const group = (models: { [key: string]: IChatModel }) => {
+    const result: { [key: string]: string[] } = {};
+    Object.keys(models).forEach((key) => {
+      const model = models[key];
+      if (model.group) {
+        if (result[model.group]) {
+          result[model.group].push(model.label || (model.name as string));
+        } else {
+          result[model.group] = [model.label || (model.name as string)];
+        }
       }
-      return acc;
-    }, {});
+    });
+    return result;
+  };
   const models = Object.values(providers).map((provider: IServiceProvider) =>
-    group(Object.values(provider.chat.models)),
+    group(provider.chat.models),
   );
   const result = {};
   merge(result, ...models);
