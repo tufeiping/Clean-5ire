@@ -104,4 +104,4 @@ You can perform keyword searches across all conversations, quickly pinpointing t
 
 ## Discover Exceptional MCP Servers
 
-> [!TIP] > [MCPSvr](https://github.com/nanbingxyz/mcpsvr), a community-driven directory of MCP servers, empowers developers to discover exceptional tools while offering a streamlined process for sharing their own MCP server creations.
+[MCPSvr](https://github.com/nanbingxyz/mcpsvr), a community-driven directory of MCP servers, empowers developers to discover exceptional tools while offering a streamlined process for sharing their own MCP server creations.
