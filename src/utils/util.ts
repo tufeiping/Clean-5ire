@@ -498,3 +498,14 @@ export function transformPropertiesType(obj: JsonValue): JsonValue {
 
   return result;
 }
+
+export function removeAdditionalProperties(schema: any): any {
+  if (schema && typeof schema === 'object') {
+    delete schema.additionalProperties; // Remove from current level
+    Object.values(schema).forEach(value => {
+      if (typeof value === 'object') {
+        removeAdditionalProperties(value); // Apply recursively to nested objects
+      }
+    });
+  }
+}
