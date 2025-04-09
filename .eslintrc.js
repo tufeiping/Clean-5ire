@@ -6,6 +6,7 @@ module.exports = {
     'import/no-extraneous-dependencies': 'off',
     'react/react-in-jsx-scope': 'off',
     'react/jsx-filename-extension': 'off',
+    'react/require-default-props': 'warn',
     'import/extensions': 'off',
     'import/no-unresolved': 'warn',
     'import/no-import-module-exports': 'off',
