@@ -204,8 +204,7 @@ export default class ModuleContext {
         stderr: process.platform === 'win32' ? 'pipe' : 'inherit',
         env: mergedEnv,
       });
-      // await client.connect(transport, { timeout: 60 * 1000 * 5 }); not yet
-      await client.connect(transport);
+      await client.connect(transport, { timeout: 60 * 1000 * 5 });
       this.clients[key] = client;
       await this.updateConfigAfterActivation(mcpSvr, config);
       return { error: null };
