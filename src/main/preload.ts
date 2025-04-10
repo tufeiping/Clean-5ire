@@ -102,9 +102,7 @@ const electronHandler = {
   openExternal(url: string) {
     return ipcRenderer.invoke('open-external', url);
   },
-  getUserDataPath(paths?: string[]) {
-    return ipcRenderer.invoke('get-user-data-path', paths);
-  },
+  getUserDataPath: () => ipcRenderer.invoke('get-user-data-path'),
   db: {
     all<T>(sql: string, params: any | undefined = undefined): Promise<T[]> {
       return ipcRenderer.invoke('db-all', { sql, params });
@@ -190,6 +188,11 @@ const electronHandler = {
       ipcRenderer.removeAllListeners(channel);
     },
   },
+  saveFile: (args: { path: string; data: Buffer }) =>
+    ipcRenderer.invoke('save-file', args),
+  getAvatarPath: () => ipcRenderer.invoke('get-avatar-path'),
+  saveAvatar: (base64Data: string) =>
+    ipcRenderer.invoke('save-avatar', base64Data),
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);

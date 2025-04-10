@@ -1,4 +1,3 @@
-/* eslint global-require: off, no-console: off, promise/always-return: off */
 // import 'v8-compile-cache';
 import os from 'node:os';
 import fs from 'node:fs';
@@ -17,6 +16,7 @@ import crypto from 'crypto';
 import { autoUpdater } from 'electron-updater';
 import { Deeplink } from 'electron-deeplink';
 import Store from 'electron-store';
+import fsPromises from 'fs/promises';
 import * as logging from './logging';
 import MenuBuilder from './menu';
 import { getFileInfo, getFileType, resolveHtmlPath } from './util';
@@ -207,10 +207,7 @@ ipcMain.handle('open-external', (_, data) => {
   shell.openExternal(data);
 });
 
-ipcMain.handle('get-user-data-path', (_, paths) => {
-  if (paths) {
-    return path.join(app.getPath('userData'), ...paths);
-  }
+ipcMain.handle('get-user-data-path', () => {
   return app.getPath('userData');
 });
 
@@ -443,6 +440,78 @@ ipcMain.handle('mcp-get-active-servers', () => {
   return mcp.getClientNames();
 });
 
+ipcMain.handle('save-file', async (_, args: { path: string; data: Buffer }) => {
+  try {
+    await fsPromises.writeFile(args.path, args.data);
+    return true;
+  } catch (error) {
+    console.error('Failed to save file:', error);
+    return false;
+  }
+});
+
+// 获取头像路径
+ipcMain.handle('get-avatar-path', () => {
+  return new Promise((resolve) => {
+    const avatarPath = path.join(app.getPath('userData'), 'avatar.png');
+    fs.access(avatarPath, fs.constants.F_OK, (err) => {
+      if (err) {
+        console.log('Avatar file does not exist');
+        resolve(null);
+        return;
+      }
+      // 确保路径使用正确的分隔符
+      const normalizedPath = avatarPath.replace(/\\/g, '/');
+      console.log('Avatar path exists:', normalizedPath);
+      resolve(normalizedPath);
+    });
+  });
+});
+
+// 保存头像
+ipcMain.handle('save-avatar', async (_, base64Data: string) => {
+  return new Promise((resolve) => {
+    try {
+      console.log('Received save avatar request');
+
+      if (!base64Data) {
+        console.error('No base64 data received');
+        resolve(false);
+        return;
+      }
+
+      const avatarPath = path.join(app.getPath('userData'), 'avatar.png');
+      console.log('Avatar will be saved to:', avatarPath);
+
+      const buffer = Buffer.from(base64Data, 'base64');
+      console.log('Buffer created, size:', buffer.length);
+
+      // 确保文件写入完成后再返回
+      fs.writeFile(avatarPath, buffer, (err) => {
+        if (err) {
+          console.error('Error writing file:', err);
+          resolve(false);
+          return;
+        }
+
+        // 验证文件是否写入成功
+        fs.readFile(avatarPath, (readErr, data) => {
+          if (readErr || data.length === 0) {
+            console.error('File verification failed:', readErr);
+            resolve(false);
+          } else {
+            console.log('File written and verified successfully');
+            resolve(true);
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Error in save-avatar:', error);
+      resolve(false);
+    }
+  });
+});
+
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
@@ -575,6 +644,20 @@ app.setName('5ire');
 app
   .whenReady()
   .then(async () => {
+    try {
+      // 确保用户数据目录存在
+      const userDataPath = app.getPath('userData');
+      fs.mkdir(userDataPath, { recursive: true }, (err) => {
+        if (err && err.code !== 'EEXIST') {
+          console.error('Failed to create user data directory:', err);
+        } else {
+          console.log('User data directory ready:', userDataPath);
+        }
+      });
+    } catch (error) {
+      console.error('Failed to create user data directory:', error);
+    }
+
     createWindow();
     // Remove this if your app does not use auto updates
     // eslint-disable-next-line

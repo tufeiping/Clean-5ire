@@ -39,6 +39,8 @@ export default function WorkspaceMenu({ collapsed }: { collapsed: boolean }) {
   const { notifySuccess, notifyError } = useToast();
   const theme = useAppearanceStore((state) => state.theme);
   const user = useAuthStore((state) => state.user);
+  const avatarUrl = useAuthStore((state) => state.avatarUrl);
+  const [avatarKey, setAvatarKey] = useState(0);
 
   const navToProfile = () => {
     if (!user) {
@@ -72,6 +74,21 @@ export default function WorkspaceMenu({ collapsed }: { collapsed: boolean }) {
     };
   }, []);
 
+  // 监听头像更新事件
+  useEffect(() => {
+    const handleAvatarUpdate = () => {
+      setAvatarKey((prev) => prev + 1);
+    };
+
+    window.electron.ipcRenderer.on('avatar-updated', handleAvatarUpdate);
+    return () => {
+      window.electron.ipcRenderer.removeListener(
+        'avatar-updated',
+        handleAvatarUpdate,
+      );
+    };
+  }, []);
+
   return (
     <div className="pr-0.5">
       <Menu open={open} onOpenChange={onOpenChange}>
@@ -97,8 +114,10 @@ export default function WorkspaceMenu({ collapsed }: { collapsed: boolean }) {
                 appearance="subtle"
                 icon={
                   <Avatar
+                    key={avatarKey}
                     aria-label={t('Common.User')}
                     name={user.user_metadata.name}
+                    image={{ src: avatarUrl }}
                     color="colorful"
                     size={24}
                   />
@@ -122,11 +141,13 @@ export default function WorkspaceMenu({ collapsed }: { collapsed: boolean }) {
                   <Persona
                     size="large"
                     name={user.user_metadata.name}
-                    secondaryText={user.email}
+                    secondaryText=""
                     avatar={
                       <Avatar
+                        key={avatarKey}
                         aria-label={t('Common.User')}
                         name={user.user_metadata.name}
+                        image={{ src: avatarUrl }}
                         color="colorful"
                         className="mr-2"
                         shape="square"
