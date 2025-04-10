@@ -200,6 +200,7 @@ const envVars = {
   SENTRY_DSN: process.env.SENTRY_DSN,
   NODE_ENV: process.env.NODE_ENV,
 };
+
 contextBridge.exposeInMainWorld('envVars', envVars);
 
 export type ElectronHandler = typeof electronHandler;

@@ -1,6 +1,5 @@
-import Debug from 'debug';
+// import Debug from 'debug';
 import { create } from 'zustand';
-import supabase from 'vendors/supa';
 import {
   AuthError,
   AuthResponse,
@@ -9,7 +8,7 @@ import {
   User,
 } from '@supabase/supabase-js';
 
-const debug = Debug('5ire:stores:useAuthStore');
+// const debug = Debug('5ire:stores:useAuthStore');
 
 export interface IAuthStore {
   session: Session | null;
@@ -30,7 +29,7 @@ export interface IAuthStore {
   saveInactiveUser: (user: User) => void;
 }
 
-const useAuthStore = create<IAuthStore>((set, get) => ({
+const useAuthStore = create<IAuthStore>((set) => ({
   session: null,
   user: null,
   /**
@@ -44,91 +43,50 @@ const useAuthStore = create<IAuthStore>((set, get) => ({
    *    2.2 Session 过期，返回 null
    */
   load: async () => {
-    let {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
-    let user = null;
-
-    if (error) {
-      debug('loadSession error', error);
-      return {
-        data: {
-          session,
-          user,
-        },
-        error,
-      } as AuthResponse;
-    }
-
-    debug('loadSession', session);
-    if (session) {
-      if ((session.expires_at as number) >= Date.now()) {
-        session = null;
-      } else {
-        user = session.user;
-      }
-    } else {
-      const serialized = localStorage.getItem('inactive-user');
-      if (serialized) {
-        user = JSON.parse(serialized) as User;
-      }
-    }
-    debug('Set session:', session);
-    debug('Set user:', user);
-    set({ session, user });
     return {
       data: {
-        session,
-        user,
+        session: null,
+        user: null,
       },
       error: null,
     } as AuthResponse;
   },
 
-  setSession: async (args) => {
-    const resp = await supabase.auth.setSession({
-      access_token: args.accessToken,
-      refresh_token: args.refreshToken,
-    });
-    debug('setSession data', resp.data);
-    set({
-      session: resp.data.session,
-      user: resp.data.user,
-    });
-    return resp;
+  setSession: async () => {
+    return {
+      data: {
+        session: null,
+        user: null,
+      },
+      error: null,
+    } as AuthResponse;
   },
 
   onAuthStateChange: (callback?: (event: any, session: any) => void) => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user?.id == get().user?.id) return;
-      if (callback) callback(event, session);
-      set({ session, user: session?.user });
-      debug('onAuthStateChange', event, session);
-    });
-    return subscription;
+    return {
+      id: '0',
+      callback: () => {
+        if (callback) callback(null, null);
+      },
+      unsubscribe: () => {},
+    } as Subscription;
   },
+
   signInWithEmailAndPassword: async (email: string, password: string) => {
-    const resp = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    const { session, user } = resp.data;
-    set({ session, user });
-    return resp;
+    console.log('signInWithEmailAndPassword', email, password);
+    return {
+      data: {
+        session: null,
+        user: null,
+      },
+      error: null,
+    } as AuthResponse;
   },
+
   signOut: async () => {
-    localStorage.removeItem('inactive-user');
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      debug('signOut error', error);
-    } else {
-      set({ session: null, user: null });
-    }
-    return { error };
+    return { error: null };
   },
+
   saveInactiveUser(user: User) {
     localStorage.setItem('inactive-user', JSON.stringify(user));
     set({ user });

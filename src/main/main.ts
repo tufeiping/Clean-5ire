@@ -1,6 +1,6 @@
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 // import 'v8-compile-cache';
-import os, { version } from 'node:os';
+import os from 'node:os';
 import fs from 'node:fs';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -18,7 +18,6 @@ import { autoUpdater } from 'electron-updater';
 import { Deeplink } from 'electron-deeplink';
 import Store from 'electron-store';
 import * as logging from './logging';
-import axiom from '../vendors/axiom';
 import MenuBuilder from './menu';
 import { getFileInfo, getFileType, resolveHtmlPath } from './util';
 import './sqlite';
@@ -59,6 +58,10 @@ if (!gotTheLock) {
 
 const mcp = new ModuleContext();
 const store = new Store();
+
+let downloader: Downloader;
+let mainWindow: BrowserWindow | null = null;
+const protocol = app.isPackaged ? 'app.5ire' : 'app.5ire.dev';
 
 class AppUpdater {
   constructor() {
@@ -113,7 +116,7 @@ class AppUpdater {
         });
         */
 
-        axiom.ingest([{ app: 'upgrade' }, { version: releaseName }]);
+        // axiomIngest([{ app: 'upgrade' }, { version: releaseName }]);
       },
     );
 
@@ -129,9 +132,6 @@ class AppUpdater {
     autoUpdater.checkForUpdates();
   }
 }
-let downloader: Downloader;
-let mainWindow: BrowserWindow | null = null;
-const protocol = app.isPackaged ? 'app.5ire' : 'app.5ire.dev';
 
 // IPCs
 ipcMain.on('ipc-5ire', async (event) => {
@@ -199,7 +199,8 @@ ipcMain.handle('get-app-version', () => {
 });
 
 ipcMain.handle('ingest-event', (_, data) => {
-  axiom.ingest(data);
+  console.log('ingest-event', data);
+  // axiomIngest(data);
 });
 
 ipcMain.handle('open-external', (_, data) => {
@@ -362,7 +363,7 @@ ipcMain.handle('select-image-with-base64', async () => {
       return null;
     }
     const blob = fs.readFileSync(filePath);
-    const base64 = Buffer.from(blob).toString('base64');
+    const base64 = blob.toString('base64');
     return JSON.stringify({
       name: fileInfo.name,
       path: filePath,
@@ -383,16 +384,16 @@ ipcMain.handle(
   },
 );
 ipcMain.handle('remove-knowledge-file', async (_, fileId: string) => {
-  return await Knowledge.remove({ fileId });
+  return Knowledge.remove({ fileId });
 });
 ipcMain.handle(
   'remove-knowledge-collection',
   async (_, collectionId: string) => {
-    return await Knowledge.remove({ collectionId });
+    return Knowledge.remove({ collectionId });
   },
 );
 ipcMain.handle('get-knowledge-chunk', async (_, chunkId: string) => {
-  return await Knowledge.getChunk(chunkId);
+  return Knowledge.getChunk(chunkId);
 });
 ipcMain.handle('download', (_, fileName: string, url: string) => {
   downloader.download(fileName, url);
@@ -403,40 +404,40 @@ ipcMain.handle('cancel-download', (_, fileName: string) => {
 
 /** mcp */
 ipcMain.handle('mcp-init', async () => {
-  mcp.init().then(async () => {
+  mcp.init().then(() => {
     // https://github.com/sindresorhus/fix-path
     logging.info('mcp initialized');
-    await mcp.load();
+    mcp.load();
     mainWindow?.webContents.send('mcp-server-loaded', mcp.getClientNames());
   });
 });
 ipcMain.handle('mcp-add-server', async (_, config) => {
-  return await mcp.addServer(config);
+  return mcp.addServer(config);
 });
 ipcMain.handle('mcp-update-server', async (_, config) => {
-  return await mcp.updateServer(config);
+  return mcp.updateServer(config);
 });
 ipcMain.handle('mcp-activate', async (_, config) => {
-  return await mcp.activate(config);
+  return mcp.activate(config);
 });
 ipcMain.handle('mcp-deactivate', async (_, clientName: string) => {
-  return await mcp.deactivate(clientName);
+  return mcp.deactivate(clientName);
 });
 ipcMain.handle('mcp-list-tools', async (_, name: string) => {
-  return await mcp.listTools(name);
+  return mcp.listTools(name);
 });
 ipcMain.handle(
   'mcp-call-tool',
   async (_, args: { client: string; name: string; args: any }) => {
-    return await mcp.callTool(args);
+    return mcp.callTool(args);
   },
 );
 ipcMain.handle('mcp-get-config', async () => {
-  return await mcp.getConfig();
+  return mcp.getConfig();
 });
 
 ipcMain.handle('mcp-put-config', async (_, config) => {
-  return await mcp.putConfig(config);
+  return mcp.putConfig(config);
 });
 ipcMain.handle('mcp-get-active-servers', () => {
   return mcp.getClientNames();
@@ -469,7 +470,7 @@ const installExtensions = async () => {
 
 const createWindow = async () => {
   if (isDebug) {
-    // await installExtensions();
+    await installExtensions();
   }
 
   const RESOURCES_PATH = app.isPackaged
@@ -589,18 +590,18 @@ app
       initCrashReporter();
     });
 
-    app.on('window-all-closed', () => {
+    app.on('window-all-closed', async () => {
       // Respect the OSX convention of having the application in memory even
       // after all windows have been closed
       if (process.platform !== 'darwin') {
         app.quit();
       }
-      axiom.flush();
+      // await axiomFlush();
     });
 
     app.on('before-quit', async () => {
       ipcMain.removeAllListeners();
-      await mcp.close();
+      mcp.close();
       process.stdin.destroy();
     });
 
@@ -612,7 +613,7 @@ app
         callback(true);
       },
     );
-    axiom.ingest([{ app: 'launch' }]);
+    // axiomIngest([{ app: 'launch' }]);
   })
   .catch(logging.captureException);
 
@@ -648,6 +649,6 @@ process.on('uncaughtException', (error) => {
   logging.captureException(error);
 });
 
-process.on('unhandledRejection', (reason: any, promise) => {
+process.on('unhandledRejection', (reason: any) => {
   logging.captureException(reason);
 });
