@@ -257,76 +257,76 @@ ipcMain.handle(
       collectionId: string;
     },
   ) => {
-    Knowledge.importFile({
-      file,
-      collectionId,
-      onProgress: (filePath: string, total: number, done: number) => {
-        mainWindow?.webContents.send(
-          'knowledge-import-progress',
-          filePath,
-          total,
-          done,
-        );
-      },
-      onSuccess: (data: any) => {
-        mainWindow?.webContents.send('knowledge-import-success', data);
-      },
-    });
+    // Knowledge.importFile({
+    //   file,
+    //   collectionId,
+    //   onProgress: (filePath: string, total: number, done: number) => {
+    //     mainWindow?.webContents.send(
+    //       'knowledge-import-progress',
+    //       filePath,
+    //       total,
+    //       done,
+    //     );
+    //   },
+    //   onSuccess: (data: any) => {
+    //     mainWindow?.webContents.send('knowledge-import-success', data);
+    //   },
+    // });
   },
 );
 
 ipcMain.handle('select-knowledge-files', async () => {
-  try {
-    const result = await dialog.showOpenDialog({
-      properties: ['openFile', 'multiSelections'],
-      filters: [
-        {
-          name: 'Documents',
-          extensions: [
-            'doc',
-            'docx',
-            'pdf',
-            'md',
-            'txt',
-            'csv',
-            'pptx',
-            'xlsx',
-          ],
-        },
-      ],
-    });
-    if (result.filePaths.length > 20) {
-      dialog.showErrorBox('Error', 'Please not more than 20 files a time.');
-      return '[]';
-    }
-    const files = [];
-    for (const filePath of result.filePaths) {
-      const fileType = await getFileType(filePath);
-      if (!SUPPORTED_FILE_TYPES[fileType]) {
-        dialog.showErrorBox(
-          'Error',
-          `Unsupported file type ${fileType} for ${filePath}`,
-        );
-        return '[]';
-      }
-      const fileInfo: any = await getFileInfo(filePath);
-      if (fileInfo.size > MAX_FILE_SIZE) {
-        dialog.showErrorBox(
-          'Error',
-          `the size of ${filePath} exceeds the limit (${
-            MAX_FILE_SIZE / (1024 * 1024)
-          } MB})`,
-        );
-        return '[]';
-      }
-      fileInfo.type = fileType;
-      files.push(fileInfo);
-    }
-    logging.debug(files);
-    return JSON.stringify(files);
-  } catch (err: any) {
-    logging.captureException(err);
-  }
+  // try {
+  //   const result = await dialog.showOpenDialog({
+  //     properties: ['openFile', 'multiSelections'],
+  //     filters: [
+  //       {
+  //         name: 'Documents',
+  //         extensions: [
+  //           'doc',
+  //           'docx',
+  //           'pdf',
+  //           'md',
+  //           'txt',
+  //           'csv',
+  //           'pptx',
+  //           'xlsx',
+  //         ],
+  //       },
+  //     ],
+  //   });
+  //   if (result.filePaths.length > 20) {
+  //     dialog.showErrorBox('Error', 'Please not more than 20 files a time.');
+  //     return '[]';
+  //   }
+  //   const files = [];
+  //   for (const filePath of result.filePaths) {
+  //     const fileType = await getFileType(filePath);
+  //     if (!SUPPORTED_FILE_TYPES[fileType]) {
+  //       dialog.showErrorBox(
+  //         'Error',
+  //         `Unsupported file type ${fileType} for ${filePath}`,
+  //       );
+  //       return '[]';
+  //     }
+  //     const fileInfo: any = await getFileInfo(filePath);
+  //     if (fileInfo.size > MAX_FILE_SIZE) {
+  //       dialog.showErrorBox(
+  //         'Error',
+  //         `the size of ${filePath} exceeds the limit (${
+  //           MAX_FILE_SIZE / (1024 * 1024)
+  //         } MB})`,
+  //       );
+  //       return '[]';
+  //     }
+  //     fileInfo.type = fileType;
+  //     files.push(fileInfo);
+  //   }
+  //   logging.debug(files);
+  //   return JSON.stringify(files);
+  // } catch (err: any) {
+  //   logging.captureException(err);
+  // }
 });
 
 ipcMain.handle('select-image-with-base64', async () => {
