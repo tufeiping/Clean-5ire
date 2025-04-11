@@ -22,7 +22,7 @@ import MenuBuilder from './menu';
 import { getFileInfo, getFileType, resolveHtmlPath } from './util';
 import './sqlite';
 import Downloader from './downloader';
-import { Embedder } from './embedder';
+// import { Embedder } from './embedder';
 import initCrashReporter from '../CrashReporter';
 import { encrypt, decrypt } from './crypt';
 import ModuleContext from './mcp';
@@ -225,55 +225,6 @@ ipcMain.handle('get-native-theme', () => {
 ipcMain.handle('get-system-language', () => {
   return app.getLocale();
 });
-
-ipcMain.handle('get-embedding-model-file-status', () => {
-  return Embedder.getFileStatus();
-});
-ipcMain.handle('remove-embedding-model', () => {
-  Embedder.removeModel();
-});
-ipcMain.handle(
-  'save-embedding-model-file',
-  (_, fileName: string, filePath: string) => {
-    Embedder.saveModelFile(fileName, filePath);
-  },
-);
-
-ipcMain.handle(
-  'import-knowledge-file',
-  (
-    _,
-    {
-      file,
-      collectionId,
-    }: {
-      file: {
-        id: string;
-        path: string;
-        name: string;
-        size: number;
-        type: string;
-      };
-      collectionId: string;
-    },
-  ) => {
-    // Knowledge.importFile({
-    //   file,
-    //   collectionId,
-    //   onProgress: (filePath: string, total: number, done: number) => {
-    //     mainWindow?.webContents.send(
-    //       'knowledge-import-progress',
-    //       filePath,
-    //       total,
-    //       done,
-    //     );
-    //   },
-    //   onSuccess: (data: any) => {
-    //     mainWindow?.webContents.send('knowledge-import-success', data);
-    //   },
-    // });
-  },
-);
 
 ipcMain.handle('select-knowledge-files', async () => {
   // try {

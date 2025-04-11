@@ -53,9 +53,15 @@ export default function useChatContext(): IChatContext {
     const getSystemMessage = () => {
       const { chat } = useChatStore.getState();
       const prompt = chat.prompt as IPrompt | null;
-      const systemMessage =
-        prompt?.systemMessage || chat?.systemMessage || null;
+      let systemMessage = prompt?.systemMessage || chat?.systemMessage || null;
       // debug(`Chat(${chat.id}):getSystemMessage: ${systemMessage}`);
+      // replace #{time} to current date
+      if (systemMessage) {
+        systemMessage = systemMessage.replace(
+          /#{date}/g,
+          `${new Date().getFullYear()}-${new Date().getMonth() + 1}-${new Date().getDate()}`,
+        );
+      }
       return systemMessage;
     };
 

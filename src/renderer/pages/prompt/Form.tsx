@@ -225,6 +225,9 @@ export default function Form() {
                 />
               </div>
             )}
+            <div style={{ fontSize: 'var(--fontSizeBase200);', color: '#666' }}>
+              {t('Common.SystemEnvironment')}
+            </div>
             <div className="mb-2.5">
               <MessageField
                 label={t('Common.UserMessage')}

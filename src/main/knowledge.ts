@@ -1,60 +1,27 @@
 import path from 'path';
 import { app } from 'electron';
 import log from 'electron-log';
-import { Schema, Field, FixedSizeList, Utf8, Float16 } from 'apache-arrow';
-import { Data } from '@lancedb/lancedb';
+import fs from 'fs';
+import fsPromises from 'fs/promises';
 import { captureException } from './logging';
 import { loadDocument } from './docloader';
 import { randomId, smartChunk } from './util';
-import { embed } from './embedder';
 
-const TABLE_NAME = 'knowledge';
-const dim = 1024;
+// 简单的文件系统存储替代向量数据库
+const KNOWLEDGE_DIR = path.join(app.getPath('userData'), 'knowledge');
 
-const knowledgeSchema = new Schema([
-  new Field('id', new Utf8()),
-  new Field('collection_id', new Utf8()),
-  new Field('file_id', new Utf8()),
-  new Field('content', new Utf8()),
-  new Field(
-    'vector',
-    new FixedSizeList(dim, new Field('item', new Float16(), true)),
-    false,
-  ),
-]);
+// 确保知识库目录存在
+if (!fs.existsSync(KNOWLEDGE_DIR)) {
+  fs.mkdirSync(KNOWLEDGE_DIR, { recursive: true });
+}
 
 export default class Knowledge {
-  private static db: any;
-
-  public static async getDatabase() {
-    if (!this.db) {
-      try {
-        this.db = await this.init();
-      } catch (err: any) {
-        captureException(err);
-      }
+  private static async ensureCollectionDir(collectionId: string) {
+    const collectionDir = path.join(KNOWLEDGE_DIR, collectionId);
+    if (!fs.existsSync(collectionDir)) {
+      await fsPromises.mkdir(collectionDir, { recursive: true });
     }
-    return this.db;
-  }
-
-  private static async init() {
-    const lancedb = await import('@lancedb/lancedb');
-    const uri = path.join(app.getPath('userData'), 'lancedb.db');
-    const db = await lancedb.connect(uri);
-    const tableNames = await db.tableNames();
-    log.debug('Existing tables:', tableNames.join(', '));
-    if (!tableNames.includes(TABLE_NAME)) {
-      await db.createEmptyTable(TABLE_NAME, knowledgeSchema);
-      log.debug('create table knowledge');
-    }
-    return db;
-  }
-
-  public static async close() {
-    if (this.db) {
-      await this.db.close();
-      this.db = null;
-    }
+    return collectionDir;
   }
 
   public static async importFile({
@@ -74,120 +41,203 @@ export default class Knowledge {
     onProgress?: (filePath: string, total: number, done: number) => void;
     onSuccess?: (data: any) => void;
   }) {
-    const textContent = await loadDocument(file.path, file.type);
-    const chunks = smartChunk(textContent);
-    const vectors = await embed(chunks, (total, done) => {
-      if (onProgress) {
-        onProgress(file.path, total, done);
+    try {
+      const textContent = await loadDocument(file.path, file.type);
+      const chunks = smartChunk(textContent);
+
+      const collectionDir = await this.ensureCollectionDir(collectionId);
+      const fileDir = path.join(collectionDir, file.id);
+
+      if (!fs.existsSync(fileDir)) {
+        await fsPromises.mkdir(fileDir, { recursive: true });
       }
-    });
-    const data = vectors.map((vector: Float32Array, index: number) => {
-      return {
-        id: randomId(),
-        collection_id: collectionId,
-        file_id: file.id,
-        content: chunks[index],
-        vector,
-      };
-    });
-    await this.add(data);
-    onSuccess &&
-      onSuccess({
-        collectionId,
-        file,
-        numOfChunks: vectors.length,
-      });
+
+      // 保存文件信息
+      await fsPromises.writeFile(
+        path.join(fileDir, 'info.json'),
+        JSON.stringify({
+          id: file.id,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          path: file.path,
+          numOfChunks: chunks.length,
+        }),
+        'utf-8',
+      );
+
+      // 保存每个文本块
+      for (let i = 0; i < chunks.length; i += 1) {
+        const chunkId = randomId();
+        await fsPromises.writeFile(
+          path.join(fileDir, `${chunkId}.txt`),
+          chunks[i],
+          'utf-8',
+        );
+
+        if (onProgress) {
+          onProgress(file.path, chunks.length, i + 1);
+        }
+      }
+
+      if (onSuccess) {
+        onSuccess({
+          collectionId,
+          file,
+          numOfChunks: chunks.length,
+        });
+      }
+    } catch (err: any) {
+      captureException(err);
+      throw err;
+    }
   }
 
-  public static async add(data: Data, options?: { stayOpen: boolean }) {
-    const db = await this.getDatabase();
-    const table = await db.openTable(TABLE_NAME);
-    await table.add(data);
-    if (!options?.stayOpen) {
-      await table.close();
-    }
-  }
+  public static async getChunk(id: string) {
+    try {
+      // 遍历所有集合目录查找包含此ID的文件
+      const collections = await fsPromises.readdir(KNOWLEDGE_DIR);
 
-  public static async getChunk(id: string, options?: { stayOpen: boolean }) {
-    const db = await this.getDatabase();
-    const table = await db.openTable(TABLE_NAME);
-    log.debug('getChunk: ', id);
-    const result = await table
-      .query()
-      .where(`id = "${id}"`)
-      .select(['id', 'collection_id', 'file_id', 'content'])
-      .toArray();
-    if (!options?.stayOpen) {
-      await table.close();
+      for (const collectionId of collections) {
+        const collectionDir = path.join(KNOWLEDGE_DIR, collectionId);
+        const files = await fsPromises.readdir(collectionDir);
+
+        for (const fileId of files) {
+          const fileDir = path.join(collectionDir, fileId);
+          const chunkPath = path.join(fileDir, `${id}.txt`);
+
+          if (fs.existsSync(chunkPath)) {
+            const content = await fsPromises.readFile(chunkPath, 'utf-8');
+            const infoPath = path.join(fileDir, 'info.json');
+            const info = JSON.parse(
+              await fsPromises.readFile(infoPath, 'utf-8'),
+            );
+
+            return {
+              id,
+              collectionId,
+              fileId,
+              content,
+            };
+          }
+        }
+      }
+
+      return null;
+    } catch (err: any) {
+      captureException(err);
+      return null;
     }
-    if (result.length > 0) {
-      return {
-        id: result[0].id,
-        collectionId: result[0].collection_id,
-        fileId: result[0].file_id,
-        content: result[0].content,
-      };
-    }
-    return null;
   }
 
   public static async search(
     collectionIds: string[],
     query: string,
-    options?: { stayOpen?: boolean; limit?: number },
+    options?: { limit?: number },
   ) {
-    const db = await this.getDatabase();
-    const table = await db.openTable(TABLE_NAME);
-    const vectors = await embed([query]);
-    const result = await table
-      .search(vectors[0])
-      .where(`collection_id in ('${collectionIds.join(',')}')`)
-      .select(['id', 'collection_id', 'file_id', 'content'])
-      .limit(options?.limit || 6)
-      .toArray();
-    if (!options?.stayOpen) {
-      await table.close();
-    }
-    return result.map((item: any) => ({
-      id: item.id,
-      collectionId: item.collection_id,
-      fileId: item.file_id,
-      content: item.content,
-    }));
-  }
+    // 简单实现：返回所有集合中的文本块
+    const results = [];
+    const limit = options?.limit || 6;
 
-  public static async remove(
-    {
-      id,
-      collectionId,
-      fileId,
-    }: { id?: string; collectionId?: string; fileId?: string },
-    options?: { stayOpen: boolean },
-  ) {
-    if (!id && !collectionId && !fileId) {
-      log.warn('id, collectionId, fileId are all undefined');
-      return false;
-    }
-    let table = null;
     try {
-      const db = await this.getDatabase();
-      table = await db.openTable(TABLE_NAME);
-      if (id) {
-        await table.delete(`id = "${id}"`);
-      } else if (fileId) {
-        await table.delete(`file_id = "${fileId}"`);
-      } else if (collectionId) {
-        await table.delete(`collection_id = "${collectionId}"`);
+      for (const collectionId of collectionIds) {
+        const collectionDir = path.join(KNOWLEDGE_DIR, collectionId);
+
+        if (fs.existsSync(collectionDir)) {
+          const files = await fsPromises.readdir(collectionDir);
+
+          for (const fileId of files) {
+            const fileDir = path.join(collectionDir, fileId);
+            const files = await fsPromises.readdir(fileDir);
+
+            for (const file of files) {
+              if (file.endsWith('.txt')) {
+                const id = file.replace('.txt', '');
+                const content = await fsPromises.readFile(
+                  path.join(fileDir, file),
+                  'utf-8',
+                );
+
+                // 简单文本匹配
+                if (content.toLowerCase().includes(query.toLowerCase())) {
+                  results.push({
+                    id,
+                    collectionId,
+                    fileId,
+                    content,
+                  });
+
+                  if (results.length >= limit) {
+                    return results;
+                  }
+                }
+              }
+            }
+          }
+        }
       }
 
-      return true;
+      return results;
+    } catch (err: any) {
+      captureException(err);
+      return [];
+    }
+  }
+
+  public static async remove({
+    id,
+    collectionId,
+    fileId,
+  }: {
+    id?: string;
+    collectionId?: string;
+    fileId?: string;
+  }) {
+    try {
+      if (id) {
+        // 删除特定文本块
+        const collections = await fsPromises.readdir(KNOWLEDGE_DIR);
+
+        for (const collection of collections) {
+          const collectionDir = path.join(KNOWLEDGE_DIR, collection);
+          const files = await fsPromises.readdir(collectionDir);
+
+          for (const file of files) {
+            const fileDir = path.join(collectionDir, file);
+            const chunkPath = path.join(fileDir, `${id}.txt`);
+
+            if (fs.existsSync(chunkPath)) {
+              await fsPromises.unlink(chunkPath);
+              return true;
+            }
+          }
+        }
+      } else if (fileId) {
+        // 删除特定文件的所有文本块
+        const collections = await fsPromises.readdir(KNOWLEDGE_DIR);
+
+        for (const collection of collections) {
+          const fileDir = path.join(KNOWLEDGE_DIR, collection, fileId);
+
+          if (fs.existsSync(fileDir)) {
+            await fsPromises.rm(fileDir, { recursive: true });
+            return true;
+          }
+        }
+      } else if (collectionId) {
+        // 删除整个集合
+        const collectionDir = path.join(KNOWLEDGE_DIR, collectionId);
+
+        if (fs.existsSync(collectionDir)) {
+          await fsPromises.rm(collectionDir, { recursive: true });
+          return true;
+        }
+      }
+
+      return false;
     } catch (err: any) {
       captureException(err);
       return false;
-    } finally {
-      if (table && !options?.stayOpen) {
-        await table.close();
-      }
     }
   }
 }

@@ -73,7 +73,6 @@
     }
   },
   "dependencies": {
-    "@lancedb/lancedb": "^0.14.1",
     "katex": "^0.16.22"
   },
   "devDependencies": {
@@ -311,6 +310,10 @@
       "buildResources": "assets",
       "output": "release/build"
     },
+    "files": [
+      "!**/test/**",
+      "!test/**"
+    ],
     "extraResources": [
       ".env",
       "./assets/**",

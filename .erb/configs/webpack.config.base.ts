@@ -4,19 +4,19 @@
 
 import webpack from 'webpack';
 import TsconfigPathsPlugins from 'tsconfig-paths-webpack-plugin';
-import webpackPaths from './webpack.paths';
 import { RsdoctorWebpackPlugin } from '@rsdoctor/webpack-plugin';
 import { dependencies as externals } from '../../release/app/package.json';
+import webpackPaths from './webpack.paths';
 
 const configuration: webpack.Configuration = {
   externals: [
     ...Object.keys(externals || {}),
-    function ({ request }, callback) {
+    function handleNodeModules({ request }, callback) {
       if (
         request &&
         (request.endsWith('.node') || request.includes('lancedb'))
       ) {
-        return callback(null, 'commonjs ' + request);
+        return callback(null, `commonjs ${request}`);
       }
       callback();
     },
@@ -28,7 +28,7 @@ const configuration: webpack.Configuration = {
     rules: [
       {
         test: /\.[jt]sx?$/,
-        exclude: /node_modules/,
+        exclude: [/node_modules/, /test/],
         use: {
           loader: 'ts-loader',
           options: {

@@ -8,6 +8,7 @@
   "Knowledge.FileDrawer.DialogTitle.EmbeddingModelIsMissing": "Embedding model is missing",
   "Knowledge.FileDrawer.DialogContent.EmbeddingModelIsRequired": "To correctly interpret the content of files, an embedding model is required. Please navigate to Settings > Embeddings to download the required embedding model first.",
   "Common.Prompts": "Prompts",
+  "Common.SystemEnvironment": "System variables: #{date}",
   "Common.Prompt": "Prompt",
   "Common.Search": "Search",
   "Common.SystemMessage": "System Message",

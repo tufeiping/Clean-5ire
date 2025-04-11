@@ -167,7 +167,7 @@ export default function PromptCtrl({
         <DialogTrigger disableButtonEnhancement>
           <Button
             size="small"
-            title={t('Common.Prompts') + '(Mod+Shift+2)'}
+            title={`${t('Common.Prompts')}(Mod+Shift+2)`}
             aria-label={t('Common.Prompts')}
             appearance="subtle"
             style={{ borderColor: 'transparent', boxShadow: 'none' }}
@@ -219,8 +219,8 @@ export default function PromptCtrl({
                   </div>
                   <div>
                     {prompts.map((prompt: IPromptDef) => {
-                      let applicableState = 0,
-                        icon = null;
+                      let applicableState = 0;
+                      let icon = null;
                       if ((prompt.models?.length || 0) > 0) {
                         applicableState = prompt.models?.includes(curModelLabel)
                           ? 1
