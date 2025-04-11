@@ -29,7 +29,7 @@ export default function EditorToolbar({
       >
         <ModelCtrl ctx={ctx} chat={chat} />
         <PromptCtrl ctx={ctx} chat={chat} />
-        <KnowledgeCtrl ctx={ctx} chat={chat} />
+        {/* <KnowledgeCtrl ctx={ctx} chat={chat} /> */}
         <MaxTokensCtrl ctx={ctx} chat={chat} onConfirm={onConfirm} />
         <TemperatureCtrl ctx={ctx} chat={chat} />
         <CtxNumCtrl ctx={ctx} chat={chat} />

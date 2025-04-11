@@ -512,6 +512,13 @@ ipcMain.handle('save-avatar', async (_, base64Data: string) => {
   });
 });
 
+// 添加IPC消息处理
+ipcMain.on('open-devtools', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.toggleDevTools();
+  }
+});
+
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();

@@ -1,4 +1,5 @@
 import { merge } from 'lodash';
+import useAuthStore from 'stores/useAuthStore';
 import { ProviderType, IChatModel, IServiceProvider } from './types';
 import Azure from './Azure';
 import Baidu from './Baidu';
@@ -14,10 +15,11 @@ import Doubao from './Doubao';
 import Grok from './Grok';
 import DeepSeek from './DeepSeek';
 import Mistral from './Mistral';
-import useAuthStore from 'stores/useAuthStore';
+import OpenRouter from './OpenRouter';
 
 export const providers: { [key: string]: IServiceProvider } = {
   OpenAI,
+  OpenRouter,
   Anthropic,
   Azure,
   Google,
@@ -74,10 +76,10 @@ export function getChatModel(
   modelName: string,
   defaultModel: IChatModel = getDefaultChatModel(providerName),
 ): IChatModel {
-  const _providers = getProviders();
-  let provider = _providers[providerName];
+  const originProviders = getProviders();
+  let provider = originProviders[providerName];
   if (!provider) {
-    provider = Object.values(_providers)[0];
+    [provider] = Object.values(originProviders);
   }
   let model = provider.chat.models[modelName];
   if (!model) {

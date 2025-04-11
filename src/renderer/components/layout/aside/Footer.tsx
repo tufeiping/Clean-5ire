@@ -1,3 +1,4 @@
+import { useState, useCallback, useEffect } from 'react';
 import {
   Menu,
   MenuItem,
@@ -12,17 +13,19 @@ import {
   ArrowLeft16Regular,
   Alert20Regular,
 } from '@fluentui/react-icons';
-import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import useAppearanceStore from 'stores/useAppearanceStore';
+import AlertDialog from 'renderer/components/AlertDialog';
 
 export default function Footer({ collapsed }: { collapsed: boolean }) {
+  const [showAbout, setShowAbout] = useState(false);
+
   const toggleSidebarCollapsed = useAppearanceStore(
     (state) => state.toggleSidebarCollapsed,
   );
   const { t } = useTranslation();
   const goTwitter = useCallback(() => {
-    window.electron.openExternal('https://x.com/1ronben');
+    window.electron.openExternal('https://x.com/dreamOfTu');
     window.electron.ingestEvent([{ app: 'go-twitter' }]);
   }, []);
 
@@ -37,7 +40,7 @@ export default function Footer({ collapsed }: { collapsed: boolean }) {
   }, []);
 
   const goGitHub = useCallback(() => {
-    window.electron.openExternal('https://github.com/nanbingxyz/5ire');
+    window.electron.openExternal('https://github.com/tufeiping/Clean-5ire');
     window.electron.ingestEvent([{ app: 'go-github' }]);
   }, []);
 
@@ -169,9 +172,39 @@ export default function Footer({ collapsed }: { collapsed: boolean }) {
                   <path d="M12 12c2 -2.96 0 -7 -1 -8c0 3.038 -1.773 4.741 -3 6c-1.226 1.26 -2 3.24 -2 5a6 6 0 1 0 12 0c0 -1.532 -1.056 -3.94 -2 -5c-1.786 3 -2.791 3 -4 2z" />
                 </svg>
               }
-              onClick={goHome}
+              // onClick={goHome}
+              onClick={() => {
+                setShowAbout(true);
+              }}
             >
               {t('Common.About')}
+            </MenuItem>
+            <MenuItem
+              icon={
+                <svg
+                  className="icon"
+                  viewBox="0 0 1048 1024"
+                  version="1.1"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="48"
+                  height="48"
+                >
+                  <path
+                    d="M1.09468 192.505529h867.71621v59.428952h-867.71621zM540.589388 708.245685c-5.94776 0-11.883358 0-17.831118-5.94776-17.831118-11.895521-17.831118-29.714476-5.94776-41.609997l101.038948-130.753423-101.038948-130.753424c-11.883358-11.883358-11.883358-29.714476 0-41.597834 17.831118-11.895521 35.662236-5.94776 41.597833 5.947761l101.038948 130.753423c17.831118 23.766715 17.831118 53.493354 0 71.31231l-101.038948 130.753424c-5.923434 5.94776-11.871195 11.895521-17.818955 11.89552zM1005.463422 470.724489L937.033769 611.682761c-2.165033 4.451698-7.577617 6.324817-12.029315 4.171947l-98.837425-47.971303c-4.463861-2.165033-6.33698-7.577617-4.171947-12.041478l68.818872-141.773201c1.970424-4.050315-1.119006-9.049353-5.850455-9.098005-21.139484 0.243262-42.838471 4.731449-63.576572 13.938923-73.015144 32.366034-111.718158 115.184644-89.581299 191.751416 6.300491 22.076043 16.699949 41.391061 30.480751 57.835584L639.365998 931.244129c-3.150245 6.482937-15.556617 32.670111 15.556617 48.056445l52.97034 25.579018c40.028792 19.071755 53.310908-16.578318 56.765231-23.15856l119.174144-254.208982c23.061255 0.437872 46.767155-4.074642 69.804083-14.413284 70.619012-31.538942 108.957132-110.526173 90.359739-185.62121-5.59503-21.990901-14.984951-41.305919-27.561606-58.176151-3.284039-3.60028-9.110169-2.919146-10.971124 1.423084z m-30.04288 3.916521M345.69989 347.597335c5.94776 0 11.883358 0 17.831118 5.94776 17.831118 11.895521 17.831118 29.714476 5.94776 41.609997l-101.038948 130.753423 101.038948 130.753424c11.883358 11.883358 11.883358 29.714476 0 41.597834-17.831118 11.895521-35.662236 5.94776-41.597833-5.947761l-101.038949-130.753424c-17.831118-23.766715-17.831118-53.493354 0-71.312309l101.038949-130.753424c5.935597-5.94776 11.883358-11.895521 17.818955-11.89552z"
+                    fill="#515151"
+                  />
+                  <path
+                    d="M549.16438 916.587583H137.941821c-76.055922 0-137.941821-61.873736-137.941821-137.929659V152.707836c0-76.055922 61.873736-137.941821 137.941821-137.941821h600.772453c76.068085 0 137.941821 61.873736 137.941821 137.941821v153.109218c0 14.595731-11.822542 26.418273-26.418273 26.418274-14.595731 0-26.418273-11.822542-26.418273-26.418274V152.707836c0-46.925275-38.18-85.105275-85.105275-85.105275H137.941821c-46.925275 0-85.105275 38.18-85.105275 85.105275v625.950088c0 46.925275 38.18 85.093112 85.105275 85.093112h411.222559c14.595731 0 26.418273 11.822542 26.418273 26.418274 0 14.595731-11.822542 26.418273-26.418273 26.418273z"
+                    fill="#515151"
+                  />
+                </svg>
+              }
+              // onClick={goHome}
+              onClick={() => {
+                window.electron.ipcRenderer.sendMessage('open-devtools');
+              }}
+            >
+              {t('Common.DevTools')}
             </MenuItem>
           </MenuList>
         </MenuPopover>
@@ -188,6 +221,15 @@ export default function Footer({ collapsed }: { collapsed: boolean }) {
         {collapsed ? <ArrowRight16Regular /> : <ArrowLeft16Regular />}
       </button>
       <div className="relative" />
+      {showAbout ? (
+        <AlertDialog
+          type="success"
+          open={showAbout}
+          setOpen={setShowAbout}
+          title="About"
+          message="<h2>Clean version of 5ire</h2><br/><hr/><br/>Modified from <a href='https://github.com/nanbingxyz/5ire' target='_blank'>https://github.com/nanbingxyz/5ire</a><br /><br />Modified by Sunny"
+        />
+      ) : null}
     </div>
   );
 }

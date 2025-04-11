@@ -12,6 +12,7 @@ export type ProviderType =
   | 'ChatBro'
   | '5ire'
   | 'Doubao'
+  | 'OpenRouter'
   | 'Grok';
 
 export interface INumberRange {
@@ -23,7 +24,6 @@ export interface INumberRange {
     rightOpen: boolean;
   };
 }
-
 
 export interface IChatModelVision {
   enabled: boolean;

@@ -15,6 +15,7 @@ import DoubaoChatService from './DoubaoChatService';
 import GrokChatService from './GrokChatService';
 import DeepSeekChatService from './DeepSeekChatService';
 import INextChatService from './INextCharService';
+import OpenRouterChatService from './OpenRouterChatService';
 
 export default function createService(
   providerName: ProviderType,
@@ -49,6 +50,8 @@ export default function createService(
       return new DeepSeekChatService(chatCtx);
     case 'LMStudio':
       return new LMStudioChatService(chatCtx);
+    case 'OpenRouter':
+      return new OpenRouterChatService(chatCtx);
     default:
       throw new Error(`Invalid provider:${providerName}`);
   }

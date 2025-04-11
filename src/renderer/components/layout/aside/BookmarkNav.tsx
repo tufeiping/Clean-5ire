@@ -64,7 +64,21 @@ export default function BookmarkNav({ collapsed }: { collapsed: boolean }) {
     }
     return (
       <div className="p-4 text-sm text-gray-400">
-        {t('Your favorite bookmarkes.')}
+        {/* {t(collapsed ? '  ⭐️' : 'Your favorite bookmarkes.')} */}
+        {collapsed ? (
+          <span
+            className="text-xl"
+            style={{
+              textAlign: 'center',
+              display: 'inline-block',
+              width: '100%',
+            }}
+          >
+            ⭐️
+          </span>
+        ) : (
+          t('Your favorite bookmarkes.')
+        )}
       </div>
     );
   };

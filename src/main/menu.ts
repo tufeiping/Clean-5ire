@@ -107,21 +107,27 @@ export default class MenuBuilder {
           label: 'Reload',
           accelerator: 'Command+R',
           click: () => {
-            this.mainWindow.webContents.reload();
+            if (!this.mainWindow.isDestroyed()) {
+              this.mainWindow.webContents.reload();
+            }
           },
         },
         {
           label: 'Toggle Full Screen',
           accelerator: 'Ctrl+Command+F',
           click: () => {
-            this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
+            if (!this.mainWindow.isDestroyed()) {
+              this.mainWindow.setFullScreen(!this.mainWindow.isFullScreen());
+            }
           },
         },
         {
           label: 'Toggle Developer Tools',
           accelerator: 'Alt+Command+I',
           click: () => {
-            this.mainWindow.webContents.toggleDevTools();
+            if (!this.mainWindow.isDestroyed()) {
+              this.mainWindow.webContents.toggleDevTools();
+            }
           },
         },
       ],

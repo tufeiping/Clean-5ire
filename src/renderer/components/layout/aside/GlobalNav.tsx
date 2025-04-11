@@ -124,7 +124,7 @@ export default function GlobalNav({ collapsed }: { collapsed: boolean }) {
           )}
         </Button>
       </div>
-      <div className="px-1">
+      {/* <div className="px-1">
         <Button
           appearance="subtle"
           title="Alt+2"
@@ -134,7 +134,7 @@ export default function GlobalNav({ collapsed }: { collapsed: boolean }) {
         >
           {collapsed ? null : t('Common.Knowledge')}
         </Button>
-      </div>
+      </div> */}
       <div className="px-1">
         <Button
           appearance="subtle"

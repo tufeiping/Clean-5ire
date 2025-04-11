@@ -15,6 +15,8 @@ import {
   ChevronDown16Regular,
   ChevronUp16Regular,
 } from '@fluentui/react-icons';
+import { renderToString } from 'katex';
+import 'katex/dist/katex.min.css';
 import {
   getNormalContent,
   getReasoningContent,
@@ -24,6 +26,84 @@ import MessageToolbar from './MessageToolbar';
 import useMermaid from '../../../hooks/useMermaid';
 
 const debug = Debug('5ire:pages:chat:Message');
+
+function renderWithKaTeX(content: string) {
+  try {
+    if (!content) {
+      return content;
+    }
+
+    const renderLatex = (latex: string, displayMode: boolean) => {
+      try {
+        const processedLatex = latex
+          .trim()
+          // 处理极限
+          .replace(/\\lim\s*_{([^}]*)}/g, '\\lim\\limits_{$1}')
+          .replace(/\\lim\s+/g, '\\lim\\limits_')
+          // 处理箭头
+          .replace(/\\to\b/g, '\\rightarrow')
+          // 处理省略号
+          .replace(/\\cdots/g, '\\cdots')
+          // 处理阶乘
+          .replace(/(\d+)!/g, '{$1!}');
+
+        return renderToString(processedLatex, {
+          throwOnError: false,
+          displayMode,
+          strict: false,
+          trust: true,
+          macros: {
+            '\\lim_': '\\lim\\limits_',
+            '\\to': '\\rightarrow',
+            '\\cdots': '\\cdots',
+          },
+          minRuleThickness: 0.05,
+          maxSize: 100,
+          maxExpand: 2000,
+          fleqn: true,
+        });
+      } catch (err) {
+        console.error('Error rendering LaTeX:', err);
+        return `<span class="katex"><span class="katex-html" aria-hidden="true">${latex}</span></span>`;
+      }
+    };
+
+    // 处理块级公式
+    let processedContent = content.replace(/\\\[([\s\S]*?)\\\]/g, (_, latex) =>
+      renderLatex(latex, true),
+    );
+
+    // 处理行内公式
+    processedContent = processedContent.replace(
+      /\\\(([\s\S]*?)\\\)/g,
+      (_, latex) => renderLatex(latex, false),
+    );
+
+    // 处理美元符号包裹的公式
+    processedContent = processedContent.replace(/\$([\s\S]*?)\$/g, (_, latex) =>
+      renderLatex(latex, false),
+    );
+
+    // 处理中括号包裹的公式
+    processedContent = processedContent.replace(
+      /\[([\s\S]*?)\]/g,
+      (_, latex) => {
+        if (
+          !/[\\$_{}^]/.test(latex) &&
+          !/\\(?:lim|sin|cos|tan|frac|cdot)/.test(latex)
+        ) {
+          return `[${latex}]`;
+        }
+        return renderLatex(latex, true);
+      },
+    );
+
+    return processedContent;
+  } catch (error) {
+    console.error('Error in renderWithKaTeX:', error);
+    return content;
+  }
+}
 
 export default function Message({ message }: { message: IChatMessage }) {
   const { t } = useTranslation();
@@ -189,7 +269,17 @@ export default function Message({ message }: { message: IChatMessage }) {
           <div className="-mt-1">
             {reasoning.trim() ? (
               <div className="think">
-                <div className="think-header" onClick={toggleThink}>
+                <div
+                  className="think-header"
+                  onClick={toggleThink}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      toggleThink();
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
                   <span className="font-bold text-gray-400 ">{thinkTitle}</span>
                   <div className="text-gray-400 -mb-0.5">
                     {isReasoningShow ? (
@@ -207,7 +297,7 @@ export default function Message({ message }: { message: IChatMessage }) {
                     dangerouslySetInnerHTML={{
                       __html: render(
                         `${
-                          highlight(reasoning, keyword) || ''
+                          renderWithKaTeX(highlight(reasoning, keyword)) || ''
                         }${isReasoning && reasoning ? '<span class="blinking-cursor" /></span>' : ''}`,
                       ),
                     }}
@@ -222,7 +312,7 @@ export default function Message({ message }: { message: IChatMessage }) {
               dangerouslySetInnerHTML={{
                 __html: render(
                   `${
-                    highlight(reply, keyword) || ''
+                    renderWithKaTeX(highlight(reply, keyword)) || ''
                   }${isLoading && reply ? '<span class="blinking-cursor" /></span>' : ''}`,
                 ),
               }}
@@ -236,7 +326,7 @@ export default function Message({ message }: { message: IChatMessage }) {
   return (
     <div className="leading-6 message" id={message.id}>
       <div>
-        <a
+        <div
           id={`prompt-${message.id}`}
           aria-label={`prompt of message ${message.id}`}
         />
@@ -251,13 +341,15 @@ export default function Message({ message }: { message: IChatMessage }) {
               fontSize === 'large' ? 'font-lg' : ''
             }`}
             dangerouslySetInnerHTML={{
-              __html: render(highlight(message.prompt, keyword) || ''),
+              __html: render(
+                renderWithKaTeX(highlight(message.prompt, keyword) || ''),
+              ),
             }}
           />
         </div>
       </div>
       <div>
-        <a id={`#reply-${message.id}`} aria-label={`Reply ${message.id}`} />
+        <div id={`reply-${message.id}`} aria-label={`Reply ${message.id}`} />
         <div
           className="msg-reply mt-2 flex flex-start"
           style={{ minHeight: '40px' }}

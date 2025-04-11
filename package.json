@@ -57,13 +57,6 @@
       "tsx",
       "json"
     ],
-    "moduleNameMapper": {
-      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/.erb/mocks/fileMock.js",
-      "\\.(css|less|sass|scss)$": "identity-obj-proxy",
-      "electron": "<rootDir>/test/mocks/electron.js",
-      "electron-log": "<rootDir>/test/mocks/electron-log.js",
-      "env.js": "<rootDir>/node_modules/@xenova/transformers/src/env.test.js"
-    },
     "setupFiles": [
       "./.erb/scripts/check-build-exists.ts"
     ],
@@ -80,7 +73,8 @@
     }
   },
   "dependencies": {
-    "@lancedb/lancedb": "^0.14.1"
+    "@lancedb/lancedb": "^0.14.1",
+    "katex": "^0.16.22"
   },
   "devDependencies": {
     "@axiomhq/js": "^1.0.0-rc.1",
